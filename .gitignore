@@ -6,6 +6,9 @@
 /target/
 .idea
 
+# redi
+*.rdb
+
 # Created by https://www.gitignore.io/api/intellij,linux,macos,sbt,scala,playframework
 
 ### Intellij ###
