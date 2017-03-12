@@ -18,7 +18,7 @@ import redis.protocol.MultiBulk
 import scala.concurrent.{ExecutionContext, Future}
 
 object RedisEventStore {
-  def appendToStream(host: String, port: Int)(streamId: String, expectedVersion: Int, events: List[Event])
+  def appendToStream(host: String, port: Int, commitsKey: String)(streamId: String, expectedVersion: Int, events: List[Event])
                              (implicit ec: ExecutionContext, as: ActorSystem): FutureEither[Unit] = {
 
     val redis = RedisClient(host = host, port = port)
@@ -32,11 +32,11 @@ object RedisEventStore {
 
       val tryCommitScript: String =
         """
-        | local commitsKey = 'samegame:commits'
-        | local timestamp = tonumber(ARGV[1])
-        | local streamId = ARGV[2]
-        | local expected = tonumber(ARGV[3])
-        | local events = ARGV[4]
+        | local commitsKey = ARGV[1]
+        | local timestamp = tonumber(ARGV[2])
+        | local streamId = ARGV[3]
+        | local expected = tonumber(ARGV[4])
+        | local events = ARGV[5]
         |
         | local actual = tonumber(redis.call('llen', streamId)) - 1
         | if actual ~= expected then
@@ -57,7 +57,7 @@ object RedisEventStore {
 
     val script = redis.
       evalshaOrEval(
-        RedisScript(tryCommitScript), args = Seq(timestamp.toString, streamId, expectedVersion.toString, serializedEvents))
+        RedisScript(tryCommitScript), args = Seq(commitsKey, timestamp.toString, streamId, expectedVersion.toString, serializedEvents))
 
     val result: Future[Either[DomainMessage, Unit]] =
       script
@@ -84,7 +84,7 @@ object RedisEventStore {
 
   implicit val commitDataFormat: Format[CommitData] = derived.oformat[CommitData]()
 
-  def readFromStream(host: String, port: Int)(streamId: String)
+  def readFromStream(host: String, port: Int, commitsKey: String)(streamId: String)
                              (implicit ec: ExecutionContext, as: ActorSystem): FutureEither[List[Event]] = {
     val redis = RedisClient(host = host, port = port)
 
@@ -92,7 +92,7 @@ object RedisEventStore {
       commitIds match {
         case Nil => Future.successful(Seq())
         case _ =>
-          redis.hmget("samegame:commits", commitIds: _*)
+          redis.hmget(commitsKey, commitIds: _*)
             .map(_.flatten.map(_.decodeString(StandardCharsets.UTF_8)))
       }
     }

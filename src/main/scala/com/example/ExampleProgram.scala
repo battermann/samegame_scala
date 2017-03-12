@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-object Program {
+object ExampleProgram {
   def main(args: Array[String]): Unit = {
     implicit val akkaSystem = akka.actor.ActorSystem()
 
@@ -22,8 +22,8 @@ object Program {
     // can be solved like this: (0,1), (1,0), (0,1); (<column index>, <row index>)
     // final score 1009
 
-    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379), RedisEventStore.readFromStream("localhost", 6379))
+    //val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
     val handle = CommandHandling.handle(store, Some(e => println(e))) _
 
     val id = GameId(UUID.randomUUID())
