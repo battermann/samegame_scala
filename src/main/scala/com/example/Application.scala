@@ -23,7 +23,7 @@ object Application {
   case object Exit extends CliCmd
 
   private def parseInput(input: String): Option[CliCmd] = {
-    input.split(" ").map(_.trim).toList match {
+    input.split("[ ]+r").map(_.trim).toList match {
       case "exit" :: Nil | ":q" :: Nil => Some(Exit)
       case "start" :: w :: h :: Nil =>
         for {
@@ -48,6 +48,10 @@ object Application {
   def main(args: Array[String]): Unit = {
     implicit val akkaSystem = akka.actor.ActorSystem()
 
+    //val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
+    val handle = CommandHandling.handle(store, Some(e => println(e))) _
+
     @tailrec
     def loop(cmd: Option[CliCmd]): Unit = {
       cmd match {
@@ -59,11 +63,11 @@ object Application {
           println("[error] unknown input")
           val cmd = promptAndGetInput()
           loop(cmd)
+        case Some(StartGame(width, height)) => ()
       }
     }
 
     println("Welcome to the SameGame CLI")
-
     loop(Some(NewLine))
     akkaSystem.terminate()
   }
