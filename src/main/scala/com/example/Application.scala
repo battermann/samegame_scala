@@ -24,7 +24,7 @@ object Application {
   case object Exit extends CliCmd
 
   private def parseInput(input: String): Option[CliCmd] = {
-    input.split("[ ]+r").map(_.trim).toList match {
+    input.split("[ ]+").map(_.trim).toList match {
       case "exit" :: Nil | ":q" :: Nil => Some(Exit)
       case "start" :: w :: h :: Nil =>
         for {
@@ -53,14 +53,10 @@ object Application {
 
     implicit val akkaSystem = akka.actor.ActorSystem("same-game-akka-system", config)
 
-    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
-    val handle = CommandHandling.handle(store, Some(e => println(e))) _
-
     val rnd = Random
 
-    //val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
+    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
     val handle = CommandHandling.handle(store, Some(e => println(e))) _
 
     @tailrec
@@ -111,11 +107,10 @@ object Application {
           val cmd = promptAndGetInput()
           loop(cmd)
 
-        case _ =>
+        case None =>
           println("unknown input")
           val cmd = promptAndGetInput()
           loop(cmd)
-        case Some(StartGame(width, height)) => ()
       }
     }
 

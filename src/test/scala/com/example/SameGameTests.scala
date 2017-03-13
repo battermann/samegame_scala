@@ -23,7 +23,7 @@ class SameGameTests extends FunSuite {
 
       given(gameId.id.toString, List(GameStarted(gameId, board)))
         .when(cmd)
-        .expect(Right(List(FinalGroupRemoved(gameId, emptyBoard, 1049))))
+        .expect(Right(List(GroupRemoved(gameId, emptyBoard, 1049), GameFinished(gameId))))
     }
 
     result.fold(err => fail(s"$err"), _ => ())
@@ -70,7 +70,7 @@ class SameGameTests extends FunSuite {
         GroupRemoved(gameId, board3, 1001)
       ))
         .when(cmd)
-        .expect(Right(List(FinalGroupRemoved(gameId, empty, 1001))))
+        .expect(Right(List(GroupRemoved(gameId, empty, 1001), GameFinished(gameId))))
     }
 
     result.fold(err => fail(s"$err"), _ => ())

@@ -143,8 +143,8 @@ object Domain {
         case (InProgress(_, totalScore), GroupRemoved(_, board, score)) =>
           InProgress(board, totalScore + score)
 
-        case (InProgress(_, totalScore), FinalGroupRemoved(_, board, score)) =>
-          Finished(board, totalScore + score)
+        case (InProgress(board, totalScore), GameFinished(_)) =>
+          Finished(board, totalScore)
 
         case _ => game
       }
@@ -159,13 +159,18 @@ object Domain {
     events.foldLeft(StateVersionPair(Uninitialized, Version(-1)))(folder)
   }
 
+  private def startGame(id: GameId, board: Board): List[Event] = {
+    val maybeFinished = if(!hasValidMoves(board)) List(GameFinished(id)) else Nil
+    GameStarted(id, board) :: maybeFinished
+  }
+
   private def tryRemoveGroup(id: GameId, board: Board, position: Position): List[Event] = {
     play(board, position)
       .map {
         case (updatedBoard, score) =>
           evaluateGameState(updatedBoard, score) match {
             case InProgress(b, s) => List(GroupRemoved(id, b, s))
-            case Finished(b, s)   => List(FinalGroupRemoved(id, b, s))
+            case Finished(b, s)   => List(GroupRemoved(id, b, s), GameFinished(id))
             case Uninitialized    => List() // impossible case
           }
       }
@@ -176,7 +181,7 @@ object Domain {
     (game, command) match {
 
       case (Uninitialized, StartNewGame(board)) =>
-        Right(List(GameStarted(id, board)))
+        Right(startGame(id, board))
 
       case (InProgress(board, score), RemoveGroup(position)) =>
         Right(tryRemoveGroup(id, board, position))
