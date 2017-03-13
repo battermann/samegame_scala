@@ -7,3 +7,4 @@ case class InvalidOperation(state: Game, command: Command) extends DomainMessage
 case class ConcurrencyFailure(msg: String) extends DomainMessage
 case object BoardWithMultipleColumnHeightsNotValid extends DomainMessage
 case class EventStoreAppendFailure(msg: String) extends DomainMessage
+case object InvalidGameIdFormat extends DomainMessage
