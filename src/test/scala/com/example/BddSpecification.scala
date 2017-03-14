@@ -41,7 +41,7 @@ object BddSpecification {
            |    When:
            |    $command
            |
-           |    Expected:
+           |    Expect:
            |    ${expected.fold(_.toString, _.map(_.toString).mkString("\n"))}
            |
            |    But got:

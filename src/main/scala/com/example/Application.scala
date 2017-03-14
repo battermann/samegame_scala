@@ -55,9 +55,9 @@ object Application {
 
     val rnd = Random
 
-    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
-    val handle = CommandHandling.handle(store, Some(e => println(e))) _
+    //val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
+    val handle = CommandHandling.handle(store) _
 
     @tailrec
     def loop(cmd: Option[CliCmd]): Unit = {

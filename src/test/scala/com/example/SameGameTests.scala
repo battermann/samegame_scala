@@ -75,4 +75,31 @@ class SameGameTests extends FunSuite {
 
     result.fold(err => fail(s"$err"), _ => ())
   }
+
+  test("""Given GameStarted, when RemoveGroup, expect FinalGroupRemoved with score -4""") {
+    val columns = List(
+      Column(List(Filled(Blue), Filled(Gray))),
+      Column(List(Filled(Blue), Filled(Green))),
+      Column(List(Filled(Gray), Filled(Red)))
+    )
+    val expected = List(
+      Column(List(Filled(Gray), Empty)),
+      Column(List(Filled(Green), Empty)),
+      Column(List(Filled(Gray), Filled(Red)))
+    )
+    val gameId = GameId(UUID.randomUUID())
+
+    val result = for {
+      board <- Board.create(columns)
+      expectedBoard <- Board.create(expected)
+      cmd = RemoveGroup(Position(0,0))
+    } yield {
+
+      given(gameId.id.toString, List(GameStarted(gameId, board)))
+        .when(cmd)
+        .expect(Right(List(GroupRemoved(gameId, expectedBoard, -4), GameFinished(gameId))))
+    }
+
+    result.fold(err => fail(s"$err"), _ => ())
+  }
 }

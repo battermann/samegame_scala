@@ -10,7 +10,7 @@ object Domain {
 
   private def calcScore(group: Group) = sqr(group.positions.size - 2)
 
-  private def penalty(numberOfStonesLeft: Int) = -sqr(numberOfStonesLeft - 2)
+  private def penalty(numberOfFilledCells: Int) = -sqr(numberOfFilledCells - 2)
 
   private def getCellState(board: Board, position: Position) = {
     val width = board.columns.length
@@ -65,8 +65,8 @@ object Domain {
       .foldLeft(0)((total, column) =>
         column.cells.foldLeft(total)((count, cell) =>
           cell match {
-            case Filled(_) => total + 1
-            case Empty => total
+            case Filled(_) => count + 1
+            case Empty => count
           })
       )
   }
