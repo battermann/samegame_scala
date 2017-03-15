@@ -114,7 +114,18 @@ object Application {
       }
     }
 
-    println("Welcome to the SameGame CLI")
+    println(
+      """
+        |Welcome to the SameGame CLI
+        |
+        |To start a new game type 'start <width> <height>'
+        |
+        |To make a move type 'play <game-id> <column> <row>'
+        |    - columns starting from the left with 0
+        |    - rows starting from the bottom with 0
+        |
+        |Quit with 'exit'
+      """.stripMargin)
     loop(Some(NewLine))
     akkaSystem.terminate()
   }
