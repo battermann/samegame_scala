@@ -108,6 +108,6 @@ object RedisEventStore {
         .toList
     }
 
-    EitherT(result.map(Right(_): Either[DomainMessage, List[Event]]))
+    EitherT.right(result)
   }
 }

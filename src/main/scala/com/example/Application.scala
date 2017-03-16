@@ -55,8 +55,8 @@ object Application {
 
     val rnd = Random
 
-    //val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
+    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
     val handle = CommandHandling.handle(store) _
 
     @tailrec
@@ -78,7 +78,7 @@ object Application {
             .toList
 
           val result =
-            EitherT(Future.successful(Board.create(columns)))
+            EitherT.fromEither[Future](Board.create(columns))
               .map(StartNewGame)
               .flatMap(cmd => handle(id, cmd))
 
@@ -96,7 +96,7 @@ object Application {
             .toRight(InvalidGameIdFormat)
             .map(GameId)
 
-          val result = EitherT(Future.successful(maybeGameId))
+          val result = EitherT.fromEither[Future](maybeGameId)
             .map(gameId => handle(gameId, RemoveGroup(Position(column, row))))
 
           Await.result(result.value, Duration.Inf)

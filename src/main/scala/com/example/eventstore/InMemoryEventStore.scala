@@ -6,7 +6,7 @@ import com.example.eventstore.FutureEither.FutureEither
 import com.example.samegame.{ConcurrencyFailure, DomainMessage, Event}
 import com.example.serialization.implicits._
 import play.api.libs.json.Json
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 object InMemoryEventStore {
@@ -35,7 +35,7 @@ object InMemoryEventStore {
       .map(s => {
           streams = streams + (streamId -> (s ++ eventsWithVersion))
       })
-    EitherT(Future.successful(result))
+    EitherT.fromEither[Future](result)
   }
 
   def readFromStream(streamId: String)(implicit ec: ExecutionContext): FutureEither[List[Event]] = {
