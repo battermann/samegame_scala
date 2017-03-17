@@ -1,5 +1,7 @@
 package com.example
 
+import java.awt.Toolkit
+import java.awt.datatransfer.{Clipboard, StringSelection}
 import java.util.UUID
 
 import cats._
@@ -85,7 +87,12 @@ object Application {
           Await.result(result.value, Duration.Inf)
             .fold(
               err => println(s"[ERROR] $err"),
-              _ => println(s"$id"))
+              _ => {
+                val selection = new StringSelection(id.id.toString)
+                val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
+                clipboard.setContents(selection, selection)
+                println(s"game-id ${id.id.toString} (copied to clipboard)")
+              })
 
           val cmd = promptAndGetInput()
           loop(cmd)
