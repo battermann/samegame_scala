@@ -25,6 +25,8 @@ object Application {
   case class Play(gameId: String, column: Int, row: Int) extends CliCmd
   case object Exit extends CliCmd
 
+  private val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
+
   private def parseInput(input: String): Option[CliCmd] = {
     input.split("[ ]+").map(_.trim).toList match {
       case "exit" :: Nil | ":q" :: Nil => Some(Exit)
@@ -89,7 +91,6 @@ object Application {
               err => println(s"[ERROR] $err"),
               _ => {
                 val selection = new StringSelection(id.id.toString)
-                val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
                 clipboard.setContents(selection, selection)
                 println(s"game-id ${id.id.toString} (copied to clipboard)")
               })
