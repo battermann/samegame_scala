@@ -140,7 +140,7 @@ object Domain {
         case (Uninitialized, GameStarted(_, board)) =>
           InProgress(board, 0)
 
-        case (InProgress(_, totalScore), GroupRemoved(_, board, score)) =>
+        case (InProgress(_, totalScore), GroupRemoved(_, _, board, score)) =>
           InProgress(board, totalScore + score)
 
         case (InProgress(board, totalScore), GameFinished(_)) =>
@@ -169,8 +169,8 @@ object Domain {
       .map {
         case (updatedBoard, score) =>
           evaluateGameState(updatedBoard, score) match {
-            case InProgress(b, s) => List(GroupRemoved(id, b, s))
-            case Finished(b, s)   => List(GroupRemoved(id, b, s), GameFinished(id))
+            case InProgress(b, s) => List(GroupRemoved(id, position, b, s))
+            case Finished(b, s)   => List(GroupRemoved(id, position, b, s), GameFinished(id))
             case Uninitialized    => List() // impossible case
           }
       }
