@@ -3,9 +3,7 @@ package com.example.eventstore
 import java.nio.charset.StandardCharsets
 
 import akka.actor.ActorSystem
-import cats.data._
 import cats.implicits._
-import com.example.eventstore.FutureEither.FutureEither
 import com.example.samegame.{ConcurrencyFailure, DomainMessage, Event, EventStoreAppendFailure}
 import com.example.serialization.implicits._
 import julienrf.json.derived
@@ -19,12 +17,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object RedisEventStore {
   def appendToStream(host: String, port: Int, commitsKey: String)(streamId: String, expectedVersion: Int, events: List[Event])
-                             (implicit ec: ExecutionContext, as: ActorSystem): FutureEither[Unit] = {
+                             (implicit ec: ExecutionContext, as: ActorSystem): Future[Either[DomainMessage, Unit]] = {
 
     val redis = RedisClient(host = host, port = port)
 
     if(events.isEmpty) {
-      ().pure[FutureEither]
+      Right(()).pure[Future]
     } else {
 
       val timestamp = DateTimeUtils.currentTimeMillis
@@ -59,7 +57,6 @@ object RedisEventStore {
       evalshaOrEval(
         RedisScript(tryCommitScript), args = Seq(commitsKey, timestamp.toString, streamId, expectedVersion.toString, serializedEvents))
 
-    val result: Future[Either[DomainMessage, Unit]] =
       script
         .map {
           case mb: MultiBulk =>
@@ -76,16 +73,15 @@ object RedisEventStore {
           case err => Left(EventStoreAppendFailure(s"$err"
           ))
         }
-      EitherT(result)
       }
   }
 
-  case class CommitData(storeRevision: Int, timestamp: Long, streamId: String, streamRevision: Int, events: Seq[Event])
+  final case class CommitData(storeRevision: Int, timestamp: Long, streamId: String, streamRevision: Int, events: Seq[Event])
 
   implicit val commitDataFormat: Format[CommitData] = derived.oformat[CommitData]()
 
   def readFromStream(host: String, port: Int, commitsKey: String)(streamId: String)
-                             (implicit ec: ExecutionContext, as: ActorSystem): FutureEither[List[Event]] = {
+                             (implicit ec: ExecutionContext, as: ActorSystem): Future[Either[DomainMessage, List[Event]]] = {
     val redis = RedisClient(host = host, port = port)
 
     def readCommitData(commitIds: Seq[String]): Future[Seq[String]] = {
@@ -102,12 +98,12 @@ object RedisEventStore {
       ids = serIds.map(_.decodeString(StandardCharsets.UTF_8))
       comData <- readCommitData(ids)
     } yield {
-      comData
+      Right(comData
         .map(data => Json.parse(data).as[CommitData])
         .flatMap(_.events)
-        .toList
+        .toList)
     }
 
-    EitherT.right(result)
+    result
   }
 }

@@ -1,11 +1,10 @@
 package com.example.eventstore
 
-import cats.data._
 import cats.implicits._
-import com.example.eventstore.FutureEither.FutureEither
 import com.example.samegame.{ConcurrencyFailure, DomainMessage, Event}
 import com.example.serialization.implicits._
 import play.api.libs.json.Json
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -15,7 +14,7 @@ object InMemoryEventStore {
 
   private def getVersion(stream: List[(Data, Int)]): Int = stream.map(_._2).max
 
-  def appendToStream(streamId: String, expectedVersion: Int, events: List[Event]): FutureEither[Unit] = {
+  def appendToStream(streamId: String, expectedVersion: Int, events: List[Event]): Future[Either[DomainMessage, Unit]] = {
     val streamOrError = streams.get(streamId) match {
       case Some(stream) if getVersion(stream) == expectedVersion =>
         Right(stream)
@@ -35,10 +34,10 @@ object InMemoryEventStore {
       .map(s => {
           streams = streams + (streamId -> (s ++ eventsWithVersion))
       })
-    EitherT.fromEither[Future](result)
+    result.pure[Future]
   }
 
-  def readFromStream(streamId: String)(implicit ec: ExecutionContext): FutureEither[List[Event]] = {
+  def readFromStream(streamId: String)(implicit ec: ExecutionContext): Future[Either[DomainMessage, List[Event]]] = {
     val events = streams.get(streamId) match {
       case Some(stream) =>
         stream
@@ -46,6 +45,6 @@ object InMemoryEventStore {
           .map(e => Json.parse(e._1).as[Event])
       case None => List()
     }
-    events.pure[FutureEither]
+    Right(events).pure[Future]
   }
 }

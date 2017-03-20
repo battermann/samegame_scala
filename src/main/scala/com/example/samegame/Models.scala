@@ -2,7 +2,7 @@ package com.example.samegame
 
 import java.util.UUID
 
-case class Position(col: Int, row: Int)
+final case class Position(col: Int, row: Int)
 
 sealed trait Color
 case object Green extends Color
@@ -12,22 +12,22 @@ case object Brown extends Color
 case object Gray extends Color
 
 sealed trait CellState
-case class Filled(color: Color) extends CellState
+final case class Filled(color: Color) extends CellState
 case object Empty extends CellState
 
-case class Cell(position: Position, state: CellState)
-case class Group(color: Color, positions: Set[Position])
-case class Column(cells: List[CellState]) extends AnyVal
-case class Board private (columns: List[Column]) extends AnyVal
+final case class Cell(position: Position, state: CellState)
+final case class Group(color: Color, positions: Set[Position])
+final case class Column(cells: List[CellState]) extends AnyVal
+final case class Board private (columns: List[Column]) extends AnyVal
 
 sealed trait Game
 case object Uninitialized extends Game
-case class InProgress(board: Board, score: Int) extends Game
-case class Finished(board: Board, score: Int) extends Game
+final case class InProgress(board: Board, score: Int) extends Game
+final case class Finished(board: Board, score: Int) extends Game
 
-case class Version(version: Int) extends AnyVal
-case class StateVersionPair(state: Game, version: Version)
-case class GameId(id: UUID) extends AnyVal
+final case class Version(version: Int) extends AnyVal
+final case class StateVersionPair(state: Game, version: Version)
+final case class GameId(id: UUID) extends AnyVal
 
 object Color {
   def apply(n: Int): Color = {

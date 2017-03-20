@@ -1,14 +1,15 @@
 package com.example
 
 import java.awt.Toolkit
-import java.awt.datatransfer.{Clipboard, StringSelection}
+import java.awt.datatransfer.StringSelection
 import java.util.UUID
 
-import cats._
+import akka.actor.ActorSystem
 import cats.data._
 import cats.implicits._
 import com.example.eventstore._
 import com.example.samegame._
+import com.example.utils.Composition.FutureEither
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 
 import scala.annotation.tailrec
@@ -20,10 +21,10 @@ import scala.util.{Random, Try}
 object Application {
 
   sealed trait CliCmd
-  case object NewLine extends CliCmd
-  case class StartGame(width: Int, height: Int) extends CliCmd
-  case class Play(gameId: String, column: Int, row: Int) extends CliCmd
-  case object Exit extends CliCmd
+  final case object NewLine extends CliCmd
+  final case class StartGame(width: Int, height: Int) extends CliCmd
+  final case class Play(gameId: String, column: Int, row: Int) extends CliCmd
+  final case object Exit extends CliCmd
 
   private val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
 
@@ -59,9 +60,8 @@ object Application {
 
     val rnd = Random
 
-    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
-    //val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
-    val handle = CommandHandling.handle(store) _
+    //val handle = withInMemoryStore()
+    val handle = withRedisStore()
 
     @tailrec
     def loop(cmd: Option[CliCmd]): Unit = {
@@ -136,5 +136,19 @@ object Application {
       """.stripMargin)
     loop(Some(NewLine))
     akkaSystem.terminate()
+  }
+
+  def withRedisStore()(implicit as: ActorSystem): (GameId, Command) => FutureEither[List[Event]] = {
+    val store = EventStore(RedisEventStore.appendToStream("localhost", 6379, "samegame:commits"), RedisEventStore.readFromStream("localhost", 6379, "samegame:commits"))
+    CommandHandling.handle(store)
+  }
+
+  def withInMemoryStore(): (GameId, Command) => EitherT[Future, DomainMessage, Unit] = {
+    val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
+    (id: GameId, cmd: Command) => for {
+      events <- CommandHandling.handle(store)(id, cmd)
+    } yield {
+      events.foreach(println)
+    }
   }
 }
