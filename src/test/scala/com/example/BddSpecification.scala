@@ -27,7 +27,7 @@ object BddSpecification {
       val (id, events, command) = givenWhen
       val store = EventStore(InMemoryEventStore.appendToStream, InMemoryEventStore.readFromStream)
       if(events.nonEmpty) {
-        Await.result(store.appendToStream(s"samegame:$id", -1, events).value, Duration.Inf)
+        Await.result(store.appendToStream(s"samegame:$id", -1, events), Duration.Inf)
       }
 
       val handle = CommandHandling.handle(store) _

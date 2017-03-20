@@ -1,7 +1,9 @@
 package com.example.eventstore
 
-import com.example.eventstore.FutureEither.FutureEither
+import com.example.samegame.DomainMessage
 
-case class EventStore[Event](
-  appendToStream: (String, Int, List[Event]) => FutureEither[Unit],
-  readFromStream: String => FutureEither[List[Event]])
+import scala.concurrent.Future
+
+final case class EventStore[Event](
+  appendToStream: (String, Int, List[Event]) => Future[Either[DomainMessage, Unit]],
+  readFromStream: String => Future[Either[DomainMessage, List[Event]]])

@@ -3,7 +3,7 @@ package com.example.samegame
 import Column.CellMapper
 import Board.ColumnMapper
 
-object Domain {
+object SameGame {
   private val bonus = 1000
 
   private def sqr(x: Int) = x * x
