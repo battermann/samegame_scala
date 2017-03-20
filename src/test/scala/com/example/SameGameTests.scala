@@ -20,10 +20,8 @@ class SameGameTests extends FunSuite {
       emptyBoard <- Board.create((1 to width).map(_ => Column.empty(height)).toList)
       cmd = RemoveGroup(Position(0,0))
     } yield {
-
-      given(gameId.id.toString, List(GameStarted(gameId, board)))
-        .when(cmd)
-        .expect(Right(List(GroupRemoved(gameId, emptyBoard, 1049), GameFinished(gameId))))
+      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), emptyBoard, 1049), GameFinished(gameId)))
+      given (gameId.id.toString, List(GameStarted(gameId, board))) when cmd expect expected
     }
 
     result.fold(err => fail(s"$err"), _ => ())
@@ -64,13 +62,14 @@ class SameGameTests extends FunSuite {
       cmd = RemoveGroup(Position(0, 0))
     } yield {
 
-      given(gameId.id.toString, List(
+      val events = List(
         GameStarted(gameId, board1),
-        GroupRemoved(gameId, board2, 1),
-        GroupRemoved(gameId, board3, 1001)
-      ))
-        .when(cmd)
-        .expect(Right(List(GroupRemoved(gameId, empty, 1001), GameFinished(gameId))))
+        GroupRemoved(gameId, Position(0 ,0), board2, 1),
+        GroupRemoved(gameId, Position(0 ,0), board3, 1001)
+      )
+      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), empty, 1001), GameFinished(gameId)))
+
+      given (gameId.id.toString, events) when cmd expect expected
     }
 
     result.fold(err => fail(s"$err"), _ => ())
@@ -94,10 +93,8 @@ class SameGameTests extends FunSuite {
       expectedBoard <- Board.create(expected)
       cmd = RemoveGroup(Position(0,0))
     } yield {
-
-      given(gameId.id.toString, List(GameStarted(gameId, board)))
-        .when(cmd)
-        .expect(Right(List(GroupRemoved(gameId, expectedBoard, -4), GameFinished(gameId))))
+      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), expectedBoard, -4), GameFinished(gameId)))
+      given (gameId.id.toString, List(GameStarted(gameId, board))) when cmd expect expected
     }
 
     result.fold(err => fail(s"$err"), _ => ())

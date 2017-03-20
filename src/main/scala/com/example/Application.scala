@@ -60,8 +60,8 @@ object Application {
 
     val rnd = Random
 
-    //val handle = withInMemoryStore()
-    val handle = withRedisStore()
+    val handle = withInMemoryStore()
+    //val handle = withRedisStore()
 
     @tailrec
     def loop(cmd: Option[CliCmd]): Unit = {
