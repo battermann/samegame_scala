@@ -119,14 +119,14 @@ object SameGame {
       .map(g => (removeGroup(board, g), calcScore(g)))
   }
 
-  private def evaluateGameState(board: Board, score: Int): Game = {
+  private def evaluateGameState(board: Board): (Game, Int) = {
     def isEmpty(board: Board) = filledCells(board) == 0
     if (hasValidMoves(board)) {
-      InProgress(board, score)
+      (InProgress(board), 0)
     } else if (isEmpty(board)) {
-      Finished(board, score + bonus)
+      (Finished(board), bonus)
     } else {
-      Finished(board, score + penalty(filledCells(board)))
+      (Finished(board), penalty(filledCells(board)))
     }
   }
 
@@ -137,14 +137,14 @@ object SameGame {
     def apply(game: Game, event: Event): Game = {
       (game, event) match {
 
-        case (Uninitialized, GameStarted(_, board)) =>
-          InProgress(board, 0)
+        case (Uninitialized, GameStarted(board)) =>
+          InProgress(board)
 
-        case (InProgress(_, totalScore), GroupRemoved(_, _, board, score)) =>
-          InProgress(board, totalScore + score)
+        case (InProgress(_), GroupRemoved(_, board, _)) =>
+          InProgress(board)
 
-        case (InProgress(board, totalScore), GameFinished(_)) =>
-          Finished(board, totalScore)
+        case (InProgress(board), GameFinished) =>
+          Finished(board)
 
         case _ => game
       }
@@ -160,18 +160,24 @@ object SameGame {
   }
 
   private def startGame(id: GameId, board: Board): List[Event] = {
-    val maybeFinished = if(!hasValidMoves(board)) List(GameFinished(id)) else Nil
-    GameStarted(id, board) :: maybeFinished
+    val maybeFinished = if(!hasValidMoves(board)) List(GameFinished) else Nil
+    GameStarted(board) :: maybeFinished
   }
 
   private def tryRemoveGroup(id: GameId, board: Board, position: Position): List[Event] = {
     play(board, position)
       .map {
         case (updatedBoard, score) =>
-          evaluateGameState(updatedBoard, score) match {
-            case InProgress(b, s) => List(GroupRemoved(id, position, b, s))
-            case Finished(b, s)   => List(GroupRemoved(id, position, b, s), GameFinished(id))
-            case Uninitialized    => List() // impossible case
+          evaluateGameState(updatedBoard) match {
+
+            case (InProgress(b), _) =>
+              List(GroupRemoved(position, b, score))
+
+            case (Finished(b), bonusOrPenalty) =>
+              List(GroupRemoved(position, b, score + bonusOrPenalty), GameFinished)
+
+            case (Uninitialized, _) =>
+              List() // impossible case
           }
       }
       .getOrElse(List())
@@ -183,7 +189,7 @@ object SameGame {
       case (Uninitialized, StartNewGame(board)) =>
         Right(startGame(id, board))
 
-      case (InProgress(board, score), RemoveGroup(position)) =>
+      case (InProgress(board), RemoveGroup(position)) =>
         Right(tryRemoveGroup(id, board, position))
 
       case (state, cmd) => Left(InvalidOperation(state, cmd))

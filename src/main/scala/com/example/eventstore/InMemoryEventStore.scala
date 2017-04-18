@@ -45,6 +45,6 @@ object InMemoryEventStore {
           .map(e => Json.parse(e._1).as[Event])
       case None => List()
     }
-    Right(events).pure[Future]
+    Future.successful(Right(events))
   }
 }

@@ -2,6 +2,9 @@ package com.example.samegame
 
 import java.util.UUID
 
+import julienrf.json.derived
+import play.api.libs.json.Format
+
 final case class Position(col: Int, row: Int)
 
 sealed trait Color
@@ -22,8 +25,8 @@ final case class Board private (columns: List[Column]) extends AnyVal
 
 sealed trait Game
 case object Uninitialized extends Game
-final case class InProgress(board: Board, score: Int) extends Game
-final case class Finished(board: Board, score: Int) extends Game
+final case class InProgress private (board: Board) extends Game
+final case class Finished private (board: Board) extends Game
 
 final case class Version(version: Int) extends AnyVal
 final case class StateVersionPair(state: Game, version: Version)
@@ -116,3 +119,4 @@ object Board {
     }
   }
 }
+

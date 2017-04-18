@@ -20,8 +20,8 @@ class SameGameTests extends FunSuite {
       emptyBoard <- Board.create((1 to width).map(_ => Column.empty(height)).toList)
       cmd = RemoveGroup(Position(0,0))
     } yield {
-      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), emptyBoard, 1049), GameFinished(gameId)))
-      given (gameId.id.toString, List(GameStarted(gameId, board))) when cmd expect expected
+      val expected = Right(List(GroupRemoved(Position(0, 0), emptyBoard, 1049), GameFinished))
+      given (gameId.id.toString, List(GameStarted(board))) when cmd expect expected
     }
 
     result.fold(err => fail(s"$err"), _ => ())
@@ -54,6 +54,10 @@ class SameGameTests extends FunSuite {
 
     val gameId = GameId(UUID.randomUUID())
 
+    val x = Board(columns1)
+
+    println(x)
+
     val result = for {
       board1 <- Board.create(columns1)
       board2 <- Board.create(columns2)
@@ -63,11 +67,11 @@ class SameGameTests extends FunSuite {
     } yield {
 
       val events = List(
-        GameStarted(gameId, board1),
-        GroupRemoved(gameId, Position(0 ,0), board2, 1),
-        GroupRemoved(gameId, Position(0 ,0), board3, 1001)
+        GameStarted(board1),
+        GroupRemoved(Position(0 ,0), board2, 1),
+        GroupRemoved(Position(0 ,0), board3, 1001)
       )
-      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), empty, 1001), GameFinished(gameId)))
+      val expected = Right(List(GroupRemoved(Position(0, 0), empty, 1001), GameFinished))
 
       given (gameId.id.toString, events) when cmd expect expected
     }
@@ -93,8 +97,8 @@ class SameGameTests extends FunSuite {
       expectedBoard <- Board.create(expected)
       cmd = RemoveGroup(Position(0,0))
     } yield {
-      val expected = Right(List(GroupRemoved(gameId, Position(0, 0), expectedBoard, -4), GameFinished(gameId)))
-      given (gameId.id.toString, List(GameStarted(gameId, board))) when cmd expect expected
+      val expected = Right(List(GroupRemoved(Position(0, 0), expectedBoard, -4), GameFinished))
+      given (gameId.id.toString, List(GameStarted(board))) when cmd expect expected
     }
 
     result.fold(err => fail(s"$err"), _ => ())

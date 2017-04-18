@@ -19,7 +19,7 @@ class SerializationTests extends FunSuite {
     val result = for {
       board <- Board.create(columns.toList)
     } yield {
-      val event = GameStarted(gameId, board)
+      val event = GameStarted(board)
       val jsonEvent = Json.toJson(event)
       jsonEvent.validate[Event] match {
         case JsSuccess(e, _) => assert(e == event)
